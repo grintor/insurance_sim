@@ -9,7 +9,7 @@
    <script>
       "use strict";
       
-      const card_template = '<div class="card mb-3"><header class="card-header is-shadowless"><p class="card-header-title">__header_text__</p><div class="card-header-icon" aria-label="more options" onclick="close_card()"><span class="icon"><i class="fas fa-times" aria-hidden="true"></i></span></div></header><div class="card-content"><div class="content">__body_text__</div></div></div>'
+      const card_template = '<div class="card mt-3"><header class="card-header is-shadowless"><p class="card-header-title is-block">__header_text__</p><div class="card-header-icon" aria-label="more options" onclick="close_card()"><span class="icon"><i class="fas fa-times" aria-hidden="true"></i></span></div></header><div class="card-content"><div class="content">__body_text__</div></div></div>'
 
       function run_simulation(){
          var results = []
@@ -43,9 +43,9 @@
          })
          
          var result_card = card_template
-         result_card = result_card.replace('__header_text__', 'Total Spent for&nbsp; <u>'+visits_input.value+'</u> &nbsp;visits totaling&nbsp; <u>$'+parseInt(expenses_input.value).toLocaleString()+'</u>:&nbsp; <span class="has-text-info">$' + total.toLocaleString() + '</span>')
+         result_card = result_card.replace('__header_text__', 'Cost of <u>'+visits_input.value+'</u> visits totaling <u>$'+parseInt(expenses_input.value).toLocaleString()+'</u>: <span class="has-text-info">$' + total.toLocaleString() + '</span>')
          result_card = result_card.replace('__body_text__', result_text_html)
-         results_section.innerHTML += result_card;
+         results_section.innerHTML = result_card + results_section.innerHTML;
          
          console.log(total)
       }
@@ -60,7 +60,7 @@
          
          if (oop_due > oopm ){
             return {
-               'text': 'saved because out of pocket max reached',
+               'text': 'saved because $'+oopm.toLocaleString()+' out of pocket max was reached',
                'value': oopm - oop_due
             }
          } else {
@@ -79,21 +79,25 @@
          var oopm = parseInt(oopm_input.value)
          var tax_bracket = parseInt(tax_input.value) / 100
          
-         var oop = deductible + copay + coinsurance
+         var contributions = deductible + copay + coinsurance
          
-         if (oop > oopm ){
-            oop = oopm
+         if (contributions > oopm ){
+            contributions = oopm
          }
-         
+
+         if (contributions > 7200 ){
+            contributions = 7200
+         }
+
          return {
-            'text': 'offset by IRS deductions from HSA contributions',
-            'value': tax_bracket * oop * -1
+            'text': 'offset by IRS deductions from $'+contributions.toLocaleString()+' in HSA contributions',
+            'value': tax_bracket * contributions * -1
          }
       }
       
       function simulate_premium(){
          return {
-            'text': 'spent on monthly premium',
+            'text': 'spent on $'+parseInt(premium_input.value).toLocaleString()+' monthly premium',
             'value': parseInt(premium_input.value) * 12
          }
       }
@@ -112,14 +116,14 @@
          
          
          return {
-            'text': 'spent on deductable',
+            'text': 'spent torwards $'+parseInt(deductible_input.value).toLocaleString()+' deductable',
             'value': deductible_spent
          }
       }
       
       function simulate_copay(){
          return {
-            'text': 'spent on copays',
+            'text': 'spent on '+parseInt(visits_input.value).toLocaleString()+' copays',
             'value': parseInt(copay_input.value) * parseInt(visits_input.value)
          }
       }
@@ -131,13 +135,13 @@
          
          if (expenses <= deductible){
             return {
-               'text': 'spent on coinsurance (deductable never met)',
+               'text': 'spent on '+parseInt(coinsurance_input.value).toLocaleString()+'% coinsurance (deductable never met)',
                'value': 0
             }
          }
 
          return {
-            'text': 'spent on coinsurance',
+            'text': 'spent on '+parseInt(coinsurance_input.value).toLocaleString()+'% coinsurance',
             'value': coinsurance/100 * (expenses - deductible)
          }
       }
@@ -179,17 +183,21 @@
       <section class="hero">
          <div class="hero-body pt-2">
          
-            <p class="title">
+            <p class="title has-text-centered">
                Insurance Plan Simulator
             </p>
 
-            <p class="subtitle">
-               Insurance plan details go on the left, the simulation inputs go on the right
+            <p class="subtitle has-text-centered">
+               A tool for comparing insurance choices
             </p>
             
+            <div class="is-divider" data-content="OR"></div>
             <form onSubmit="run_simulation(); return false;" class="columns">
                <div class="column">
-
+               
+                  <p class="is-size-4 has-text-centered">
+                     <u>Insurance Plan Details:</u>
+                  </p>
 
                   <div class="field">
                      <label class="label">Monthly Premium ($)</label>
@@ -273,6 +281,10 @@
 
                <div class="column">
 
+                  <p class="is-size-4 has-text-centered">
+                     <u>Insurance Simulation Inputs:</u>
+                  </p>
+
                   <div class="field">
                      <label class="label">Visit Count (#)</label>
                      <div class="control has-icons-left has-icons-right">
@@ -292,13 +304,17 @@
                            <i class="fas fa-dollar-sign"></i>
                         </span>
                      </div>
-                     <p class="help">Total annual medical expenses to simulate</p>
+                     <p class="help">
+                        Total annual medical expenses to simulate
+                        <br />
+                        (Estimate of cost without insurance)
+                     </p>
                   </div>
                   
                   <button class="button is-success">Run Simulation</button>
                   
-                  <section class="section" id="results_section">
-                  </section>
+                  <div id="results_section">
+                  </div>
                   
 
                </div>
